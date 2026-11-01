@@ -25,7 +25,7 @@ Using the stage-specific fitted logistic treatment model, compute
 
 $$
 \begin{aligned}
-m_{rj}&=\operatorname{expit}\{X_{rk}^{\mathsf T}\widehat\alpha_k-\widehat A_k(s_j-)\},
+m_{rj}&=\mathrm{expit}\{X_{rk}^{\mathsf T}\widehat\alpha_k-\widehat A_k(s_j-)\},
 & q_{rj}&=D_r-m_{rj},
 & v_{rj}&=m_{rj}(1-m_{rj}),\\
 C_j&=\frac1n\sum_r q_{rj}a_{rj}D_r,
@@ -120,7 +120,7 @@ $$
 \begin{aligned}
 \widehat B_D(t_{k+1}-)&=\sum_{\ell=1}^k\widehat A_\ell(t_{\ell+1}-),\\
 \psi_i^{B_D}(t_{k+1}-)&=\sum_{\ell=1}^k\psi_{i\ell}^A(t_{\ell+1}-),\\
-\widehat{\operatorname{Var}}\{\widehat B_D(t_{k+1}-)\}
+\widehat{\mathrm{Var}}\{\widehat B_D(t_{k+1}-)\}
  &=\frac1{n^2}\sum_{i=1}^n\big\{\psi_i^{B_D}(t_{k+1}-)\big\}^2.
 \end{aligned}
 }
@@ -144,7 +144,7 @@ $$
  =\frac{\sum_{k,j}\rho_k(s_j)
    \{\psi_{ik}^A(s_j)-\psi_{ik}^A(s_j-)\}}{Q},
 \qquad
-\widehat{\operatorname{Var}}(\widehat\beta)
+\widehat{\mathrm{Var}}(\widehat\beta)
  =\frac1{n^2}\sum_i(\psi_i^\beta)^2.
 $$
 
@@ -313,9 +313,9 @@ uncentered variance convention:
 
 $$
 \boxed{
-\widehat{\operatorname{Var}}\{\widehat B_D(t)\}
+\widehat{\mathrm{Var}}\{\widehat B_D(t)\}
  =\frac1{n^2}\sum_{i=1}^n\{\psi_i^{B_D}(t)\}^2,
-\qquad \widehat{\mathrm{SE}}=\sqrt{\widehat{\operatorname{Var}}}.
+\qquad \widehat{\mathrm{SE}}=\sqrt{\widehat{\mathrm{Var}}}.
 }
 $$
 
@@ -329,7 +329,7 @@ $$
  \psi_i^\beta
  &=\frac{\sum_j\rho_{k(j)}(s_j)
     \{\Delta E_{i,k(j)}(s_j)+\Delta U_{i,k(j)}(s_j)\}}{Q},\\
- \widehat{\operatorname{Var}}(\widehat\beta)
+ \widehat{\mathrm{Var}}(\widehat\beta)
  &=\frac1{n^2}\sum_i(\psi_i^\beta)^2.
 \end{aligned}
 $$

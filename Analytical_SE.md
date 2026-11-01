@@ -173,14 +173,13 @@ linear instrument model $`E(Z\mid L;\alpha)=X^{\mathsf T}\alpha`$, compute
 
 ```math
 \begin{aligned}
- z_r^c&=Z_r-X_r^{\mathsf T}\widehat\alpha,
- &\eta_{rj}&=\sum_{h<j}D_{r,k(h)}b_h,
- &w_{rj}&=z_r^c e^{\eta_{rj}},\\
- C_j&=\frac1n\sum_{r\in\mathcal R_k}w_{rj}a_{rj}D_{rk},
- &b_j:=\Delta\widehat B_D(s_j)
- &=\frac{\sum_{r\in\mathcal R_k}w_{rj}\Delta N_{rj}}{nC_j},\\
- \Delta\widehat R_{rj}
- &=\Delta N_{rj}-a_{rj}D_{rk}b_j.
+z_r^{c} &= Z_r - X_r^{\mathsf{T}}\widehat{\alpha}, \\
+\eta_{rj} &= \sum_{h\lt j} D_{r,k(h)} b_h, \\
+w_{rj} &= z_r^{c}\exp(\eta_{rj}), \\
+C_j &= \frac{1}{n}\sum_{r\in\mathcal{R}_k} w_{rj}a_{rj}D_{rk}, \\
+b_j &= \Delta\widehat{B}_D(s_j)
+     = \frac{\sum_{r\in\mathcal{R}_k} w_{rj}\Delta N_{rj}}{n C_j}, \\
+\Delta\widehat{R}_{rj} &= \Delta N_{rj} - a_{rj}D_{rk}b_j.
 \end{aligned}
 ```
 

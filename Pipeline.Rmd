@@ -1,0 +1,212 @@
+---
+title: "SNCSTM simulation: SI and IV"
+output: html_document
+---
+
+This pipeline generates one dataset under sequential ignorability (SI) and one
+under instrumental-variable (IV) identification, then estimates both causes.
+`n` is the number of individuals per dataset; `seed` identifies one simulation
+replication. The optional Monte Carlo section at the end is disabled by default.
+
+## Settings and functions
+
+Run the chunks in order from the project root, or render this document.
+Supported event-rate settings are 0.07, 0.15, 0.30, and 0.60.
+
+```{r setup}
+knitr::opts_chunk$set(error = FALSE)
+stopifnot(requireNamespace("survival", quietly = TRUE))
+
+n <- 10000
+seed <- 1
+event_rate <- 0.30
+
+source("R/SI.R")
+source("R/IV.R")
+```
+
+## SI: generate data
+
+```{r si-generation}
+si_simulation <- simulation_si(n = n, seed = seed, event_rate = event_rate)
+si_data <- si_simulation$observed
+head(si_data)
+```
+
+## SI: fit nuisance models and estimate both causes
+
+Treatment and censoring nuisance models are fitted once and shared by both causes.
+
+```{r si-estimation}
+si_nuisance <- fit_si_nuisance(si_data)
+si_fits <- lapply(1:2, function(cause) {
+  estimation_si(si_data, cause = cause, n_grid = 10, nuisance = si_nuisance)
+})
+```
+
+### Four targets for each cause
+
+Report cumulative effects at the left limits of 0.5, 1, and 1.5, and the pooled
+beta, with analytical standard errors and pointwise 95% confidence intervals.
+Only the display combines `B_summary` and `pooled`; the estimator is unchanged.
+
+```{r si-results}
+si_results <- do.call(rbind, lapply(si_fits, function(fit) {
+  B <- fit$B_summary
+  pooled <- fit$pooled
+  data.frame(
+    cause = pooled$cause,
+    parameter = c(paste0("B(", B$time, ")"), "beta (pooled)"),
+    estimate = c(B$B, pooled$beta),
+    std = c(B$std_B, pooled$std),
+    lower = c(B$lower, pooled$beta - 1.96 * pooled$std),
+    upper = c(B$upper, pooled$beta + 1.96 * pooled$std),
+    truth = si_simulation$parameters$beta[pooled$cause] * c(B$time, 1)
+  )
+}))
+si_results
+```
+
+## IV: generate data
+
+```{r iv-generation}
+iv_simulation <- simulation_iv(n = n, seed = seed, event_rate = event_rate)
+iv_data <- iv_simulation$observed
+head(iv_data)
+```
+
+## IV: fit nuisance models and estimate both causes
+
+Instrument-mean and censoring nuisance models are fitted once and shared by both causes.
+
+```{r iv-estimation}
+iv_nuisance <- fit_iv_nuisance(iv_data)
+iv_fits <- lapply(1:2, function(cause) {
+  estimation_iv(iv_data, cause = cause, n_grid = 10, nuisance = iv_nuisance)
+})
+```
+
+### Four targets for each cause
+
+Each cause has three cumulative-effect estimates and one pooled estimate, with
+analytical standard errors and pointwise 95% confidence intervals.
+
+```{r iv-results}
+iv_results <- do.call(rbind, lapply(iv_fits, function(fit) fit$summary))
+iv_results$truth <- iv_simulation$parameters$beta[iv_results$cause] * rep(c(.5, 1, 1.5, 1), 2)
+iv_results <- iv_results[c("cause", "parameter", "estimate", "std", "lower", "upper", "truth")]
+iv_results
+```
+
+## Monte Carlo simulation (disabled by default)
+
+All chunks below use `eval=FALSE`, so rendering this document runs only the
+single-seed examples above. To run Monte Carlo simulations, execute these chunks
+manually in order from the project root. The existing runners preserve the data
+generators, nuisance fits, estimators, analytical SEs, and `n_grid = 10`.
+
+### Settings
+
+The number of replications is controlled by `B`: use `B = 5` for a small test
+or `B = 1000` for the original simulations. Each method uses seeds 1 through `B`;
+the single-run `seed` above does not change this sequence. Each seed generates a new
+dataset and estimates both causes. The Monte Carlo section uses all three sample
+sizes from the manuscript table and the event rate above (0.30). The single-run
+section still uses `n = 10000`. Set `sample_sizes <- n` for that size alone.
+
+```{r mc-settings, eval=FALSE}
+B <- 5
+# B <- 1000
+sample_sizes <- c(1000, 5000, 10000)
+stopifnot(length(B) == 1, B %in% 1:1000,
+          all(sample_sizes %in% c(1000, 5000, 10000)),
+          !anyDuplicated(sample_sizes), event_rate %in% c(.07, .15, .30, .60))
+seeds <- seq_len(B)
+rate_tag <- sprintf("%02d", round(100 * event_rate))
+jobs <- expand.grid(method = c("si_cumulative", "iv_table1"), n = sample_sizes,
+                    stringsAsFactors = FALSE)
+jobs$output <- sprintf("results/results_%s_%s_n%d", jobs$method, rate_tag, jobs$n)
+rscript <- file.path(R.home("bin"), "Rscript")
+```
+
+### Run individual replications
+
+Run sequentially, with one fresh R process per seed. Each runner saves eight
+target rows and its code fingerprints. Existing files with different settings
+or code cause an error; matching files are recomputed if this chunk is rerun.
+
+```{r mc-run, eval=FALSE}
+for (i in seq_len(nrow(jobs))) {
+  job <- jobs[i, ]
+  for (id in seeds) {
+    cat(job$method, "n =", job$n, "seed =", id, "\n")
+    status <- system2(rscript, shQuote(c(
+      paste0("scripts/run_", job$method, ".R"), id, job$n, job$output, event_rate
+    )), stdout = FALSE)
+    if (status != 0) stop("Run failed: ", job$method, ", n=", job$n, ", seed=", id)
+  }
+}
+```
+
+### Merge saved replications
+
+The original merge scripts read seeds 1 through `B` and recompute summaries
+from individual estimates. They do not generate data or fit models. As in the
+original scripts, failed estimates are recorded and finite results are used;
+inspect the success counts below before interpreting the table.
+
+```{r mc-merge, eval=FALSE}
+for (i in seq_len(nrow(jobs))) {
+  job <- jobs[i, ]
+  status <- system2(rscript, shQuote(c(
+    paste0("scripts/merge_", job$method, ".R"), job$output, B
+  )))
+  if (status != 0) stop("Merge failed: ", job$method, ", n=", job$n)
+}
+```
+
+### SI and IV comparison table
+
+Percent bias is `100 * abs(Bias / truth)`. The original summaries call MCSD
+`SEE` and average estimated SE `SD`; coverage `CP` is already in percent.
+Only display labels and formatting change here. Estimates and summaries retain
+the original precision in the saved RDS files.
+
+```{r mc-table, eval=FALSE}
+mc_summary <- do.call(rbind, lapply(seq_len(nrow(jobs)), function(i) {
+  job <- jobs[i, ]
+  file <- file.path(job$output, sprintf("%s_%s_n%d.rds", job$method, rate_tag, job$n))
+  x <- readRDS(file)$summary
+  stopifnot(nrow(x) == 8, all(x$n == job$n), all(x$event_rate == event_rate),
+            all(x$simulations == B))
+  x$method <- if (job$method == "si_cumulative") "SI" else "IV"
+  x$parameter <- sub("B_D(", "B(", x$parameter, fixed = TRUE)
+  x[c("method", "n", "cause", "parameter", "truth", "simulations",
+      "successful_estimates", "successful_intervals", "Bias", "SEE", "SD", "CP")]
+}))
+mc_summary[c("method", "n", "cause", "parameter", "simulations",
+             "successful_estimates", "successful_intervals")]
+
+targets <- c("B(0.5)", "B(1)", "B(1.5)", "beta (pooled)")
+mc_tables <- list()
+for (sample_size in sample_sizes) for (cause in 1:2) {
+  sides <- lapply(c("SI", "IV"), function(method) {
+    x <- mc_summary[mc_summary$method == method & mc_summary$n == sample_size &
+                      mc_summary$cause == cause, ]
+    stopifnot(nrow(x) == 4, setequal(x$parameter, targets))
+    x <- x[match(targets, x$parameter), ]
+    values <- rbind(sprintf("%.2f%%", 100 * abs(x$Bias / x$truth)),
+                    sprintf("%.3f", x$SEE), sprintf("%.3f", x$SD),
+                    sprintf("%.1f%%", x$CP))
+    colnames(values) <- paste(method, targets)
+    values
+  })
+  mc_tables[[length(mc_tables) + 1]] <- data.frame(
+    n = sample_size, cause = cause,
+    Metric = c("Perc. Bias", "MCSD", "Ave. SE", "95% CP"),
+    sides[[1]], sides[[2]], check.names = FALSE
+  )
+}
+mc_table <- do.call(rbind, mc_tables)
+knitr::kable(mc_table, row.names = FALSE)
+```

@@ -1,0 +1,24 @@
+# Generated simulation results and logs
+results/
+logs/
+*.rds
+*.RDS
+*.log
+*.out
+*.err
+
+# R sessions and generated documents
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+*.html
+*_cache/
+*_files/
+
+# System and editor temporary files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.tmp

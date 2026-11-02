@@ -1,4 +1,4 @@
-# SNCSTM simulation
+# Cause-specific SNCSTM simulation
 
 [Pipeline.Rmd](Pipeline.Rmd) demonstrates simulation and estimation under
 sequential ignorability (SI) and instrumental-variable (IV) settings with two

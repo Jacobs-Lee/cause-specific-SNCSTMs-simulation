@@ -39,7 +39,7 @@ Fix stage $`k`$ and let $`A_{k0}(t)`$ be its true cumulative effect. Define
 
 ```math
 \begin{aligned}
-m(t)&=\operatorname{expit}\{X_k^\top\alpha_{k0}-A_{k0}(t^-)\},
+m(t)&=\mathrm{expit}\{X_k^\top\alpha_{k0}-A_{k0}(t^-)\},
 & q(t)&=D_k-m(t),\\
 v(t)&=m(t)\{1-m(t)\},
 & C_k(t)&=E_0[q(t)\check Y^1(t)D_k],\\
@@ -72,7 +72,7 @@ d\psi_{ik}^A(t)={}&\frac{q_i(t)}{C_k(t)}\,dR_i(t)
 The first term is direct, the second is historical feedback, and the last two propagate estimation of treatment and censoring nuisance parameters. For $`t\in[t_k,t_{k+1})`$, the cumulative-effect IF is
 
 ```math
-\boxed{\psi_i^{B_D}(t)=\sum_{\ell<k}\psi_{i\ell}^A(t_{\ell+1}^-)+\psi_{ik}^A(t).}
+\boxed{\psi_i^{B_D}(t)=\sum_{\ell\lt k}\psi_{i\ell}^A(t_{\ell+1}^-)+\psi_{ik}^A(t).}
 ```
 
 ## Part II. Instrumental Variables (IV)
@@ -135,8 +135,8 @@ The recursion is evaluated by replacing oracle quantities with estimates at each
 
 ```math
 \boxed{
-\widehat{\operatorname{Var}}\{\widehat B_D(t)\}
+\widehat{\mathrm{Var}}\{\widehat B_D(t)\}
 =\frac1{n^2}\sum_{i=1}^n\{\widehat\psi_i^{B_D}(t)\}^2,
-\qquad \widehat{\operatorname{SE}}=\sqrt{\widehat{\operatorname{Var}}}.
+\qquad \widehat{\mathrm{SE}}=\sqrt{\widehat{\mathrm{Var}}}.
 }
 ```

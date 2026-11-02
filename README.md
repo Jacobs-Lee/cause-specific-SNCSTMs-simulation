@@ -5,18 +5,6 @@ sequential ignorability (SI) and instrumental-variable (IV) settings with two
 competing causes. It has two parts: a single simulation for each method, followed
 by a Monte Carlo simulation that produces the SI/IV comparison table.
 
-## Combined HTML report
-
-Knitting `Pipeline.Rmd` produces one `Pipeline.html`: this project guide comes
-first, followed by the executed code, single-simulation estimates, and the
-SI/IV comparison table. The report reads this README directly, so the guide
-does not need to be maintained in two places. Open the generated HTML in a
-web browser.
-
-The default B=5 results illustrate the workflow; they are not the
-1,000-replication manuscript results. Viewing this README on GitHub does not
-run any R code.
-
 ## Getting started
 
 Open the project with `SNCSTM-simulation/` as the working directory. Install the

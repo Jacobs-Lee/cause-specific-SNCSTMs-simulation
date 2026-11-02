@@ -3,15 +3,6 @@ title: "SNCSTM simulation: SI and IV"
 output: html_document
 ---
 
-```{r project-guide, echo=FALSE, results='asis'}
-project_guide <- readLines("README.md", warn = FALSE)
-project_guide[1] <- "# Project guide"
-cat(project_guide, sep = "\n")
-cat("\n\n")
-```
-
-# Pipeline execution
-
 This pipeline generates one dataset under sequential ignorability (SI) and one
 under instrumental-variable (IV) identification, then estimates both causes.
 `n` is the number of individuals per dataset; `seed` identifies one simulation

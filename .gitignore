@@ -13,6 +13,7 @@ logs/
 .Ruserdata
 .Rproj.user/
 *.html
+!/Pipeline.html
 *_cache/
 *_files/
 

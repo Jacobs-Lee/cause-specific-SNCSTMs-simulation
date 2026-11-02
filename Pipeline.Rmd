@@ -3,10 +3,19 @@ title: "SNCSTM simulation: SI and IV"
 output: html_document
 ---
 
+```{r project-guide, echo=FALSE, results='asis'}
+project_guide <- readLines("README.md", warn = FALSE)
+project_guide[1] <- "# Project guide"
+cat(project_guide, sep = "\n")
+cat("\n\n")
+```
+
+# Pipeline execution
+
 This pipeline generates one dataset under sequential ignorability (SI) and one
 under instrumental-variable (IV) identification, then estimates both causes.
 `n` is the number of individuals per dataset; `seed` identifies one simulation
-replication. The optional Monte Carlo section at the end is disabled by default.
+replication. The Monte Carlo section at the end runs five replications per setting by default.
 
 ## Settings and functions
 
@@ -98,11 +107,11 @@ iv_results <- iv_results[c("cause", "parameter", "estimate", "std", "lower", "up
 iv_results
 ```
 
-## Monte Carlo simulation (disabled by default)
+## Monte Carlo simulation
 
-All chunks below use `eval=FALSE`, so rendering this document runs only the
-single-seed examples above. To run Monte Carlo simulations, execute these chunks
-manually in order from the project root. The existing runners preserve the data
+All chunks below use `eval=TRUE`, so rendering this document runs the single-seed
+examples and the Monte Carlo simulation, then displays the comparison table.
+You can also execute these chunks manually in order. The existing runners preserve the data
 generators, nuisance fits, estimators, analytical SEs, and `n_grid = 10`.
 
 ### Settings
@@ -114,7 +123,7 @@ dataset and estimates both causes. The Monte Carlo section uses all three sample
 sizes from the manuscript table and the event rate above (0.30). The single-run
 section still uses `n = 10000`. Set `sample_sizes <- n` for that size alone.
 
-```{r mc-settings, eval=FALSE}
+```{r mc-settings, eval=TRUE}
 B <- 5
 # B <- 1000
 sample_sizes <- c(1000, 5000, 10000)
@@ -125,9 +134,18 @@ seeds <- seq_len(B)
 rate_tag <- sprintf("%02d", round(100 * event_rate))
 jobs <- expand.grid(method = c("si_cumulative", "iv_table1"), n = sample_sizes,
                     stringsAsFactors = FALSE)
-jobs$output <- sprintf("results/results_%s_%s_n%d", jobs$method, rate_tag, jobs$n)
+# A fresh directory keeps earlier code versions and simulation runs separate.
+run_dir <- tempfile(pattern = paste0("mc_B", B, "_"), tmpdir = "results")
+dir.create(run_dir, recursive = TRUE)
+jobs$output <- file.path(run_dir, sprintf("results_%s_%s_n%d", jobs$method, rate_tag, jobs$n))
+cat("Monte Carlo output:", normalizePath(run_dir), "\n")
 rscript <- file.path(R.home("bin"), "Rscript")
 ```
+
+Each execution of `mc-settings` creates a new `run_dir` under `results/`.
+Run it once, then run `mc-run`, `mc-merge`, and `mc-table` in order. To continue
+working with the same batch in this R session, keep `jobs` and do not rerun
+`mc-settings`. Earlier results are retained.
 
 ### Run individual replications
 
@@ -135,7 +153,7 @@ Run sequentially, with one fresh R process per seed. Each runner saves eight
 target rows and its code fingerprints. Existing files with different settings
 or code cause an error; matching files are recomputed if this chunk is rerun.
 
-```{r mc-run, eval=FALSE}
+```{r mc-run, eval=TRUE}
 for (i in seq_len(nrow(jobs))) {
   job <- jobs[i, ]
   for (id in seeds) {
@@ -155,7 +173,7 @@ from individual estimates. They do not generate data or fit models. As in the
 original scripts, failed estimates are recorded and finite results are used;
 inspect the success counts below before interpreting the table.
 
-```{r mc-merge, eval=FALSE}
+```{r mc-merge, eval=TRUE}
 for (i in seq_len(nrow(jobs))) {
   job <- jobs[i, ]
   status <- system2(rscript, shQuote(c(
@@ -172,7 +190,7 @@ Percent bias is `100 * abs(Bias / truth)`. The original summaries call MCSD
 Only display labels and formatting change here. Estimates and summaries retain
 the original precision in the saved RDS files.
 
-```{r mc-table, eval=FALSE}
+```{r mc-table, eval=TRUE}
 mc_summary <- do.call(rbind, lapply(seq_len(nrow(jobs)), function(i) {
   job <- jobs[i, ]
   file <- file.path(job$output, sprintf("%s_%s_n%d.rds", job$method, rate_tag, job$n))

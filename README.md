@@ -3,7 +3,19 @@
 [Pipeline.Rmd](Pipeline.Rmd) demonstrates simulation and estimation under
 sequential ignorability (SI) and instrumental-variable (IV) settings with two
 competing causes. It has two parts: a single simulation for each method, followed
-by an optional Monte Carlo simulation that produces the SI/IV comparison table.
+by a Monte Carlo simulation that produces the SI/IV comparison table.
+
+## Combined HTML report
+
+Knitting `Pipeline.Rmd` produces one `Pipeline.html`: this project guide comes
+first, followed by the executed code, single-simulation estimates, and the
+SI/IV comparison table. The report reads this README directly, so the guide
+does not need to be maintained in two places. Open the generated HTML in a
+web browser.
+
+The default B=5 results illustrate the workflow; they are not the
+1,000-replication manuscript results. Viewing this README on GitHub does not
+run any R code.
 
 ## Getting started
 
@@ -14,14 +26,16 @@ R packages used by the pipeline if needed:
 install.packages(c("survival", "knitr", "rmarkdown"))
 ```
 
-Run the Rmd chunks in order, or render the single-simulation example as HTML:
+Run the Rmd chunks in order, or render the full pipeline as HTML:
 
 ```r
 rmarkdown::render("Pipeline.Rmd")
 ```
 
-HTML rendering also requires Pandoc. The Monte Carlo chunks have `eval=FALSE`,
-so rendering the Rmd runs only the single-simulation section.
+HTML rendering also requires Pandoc. The four Monte Carlo chunks have
+`eval=TRUE`, so Knit runs the single-simulation section, all B=5 replications,
+and the SI/IV comparison table. Each render creates a fresh result directory.
+Set all four Monte Carlo chunks to `eval=FALSE` to render only the single-simulation section.
 
 ## 1. Run one simulation
 
@@ -88,7 +102,7 @@ uses the methods, targets, seeds, and settings of the manuscript simulation
 table, except that all analytical variances now use the uncentered IF formula
 below. SEs and coverage can therefore differ from the historical table. The existing scripts support integer values of `B` from 1 to 1000.
 
-Select and run the code in these four chunks manually, in order:
+Knit executes these four chunks in order; they can also be run manually:
 
 | Chunk | What it does |
 |---|---|
@@ -96,6 +110,11 @@ Select and run the code in these four chunks manually, in order:
 | `mc-run` | Runs each seed sequentially and saves its estimates |
 | `mc-merge` | Combines saved replications and calculates summary statistics |
 | `mc-table` | Displays success counts and the SI/IV comparison table |
+
+Each execution of `mc-settings` creates a fresh directory under `results/`
+and prints its path. Run this chunk once, then run `mc-run`, `mc-merge`, and
+`mc-table` in order; all three use the same `jobs` paths. Rerunning
+`mc-settings` starts a separate batch and preserves earlier results.
 
 The run and merge chunks call the existing scripts in `scripts/`. Each run
 starts a fresh R process. Rerunning `mc-run` recomputes matching saved runs;
@@ -125,11 +144,11 @@ workflow check; use the full replication count for the simulation study.
 
 ## Saved results and files
 
-Monte Carlo results are written under `results/`. For example, at 30% and
-`n = 10000`:
+Monte Carlo results are written under a fresh `results/mc_B5_<id>/` directory
+(or `mc_B1000_<id>/` when B is 1000). For example, at 30% and n = 10000:
 
 ```text
-results/
+results/mc_B5_<id>/
 ├── results_si_cumulative_30_n10000/
 │   ├── simulation_0001.rds
 │   ├── ...
@@ -147,14 +166,14 @@ it is not automatically exported as a separate table file.
 
 | File | Purpose |
 |---|---|
-| [Pipeline.Rmd](Pipeline.Rmd) | Single-simulation examples and optional Monte Carlo workflow |
+| [Pipeline.Rmd](Pipeline.Rmd) | Single-simulation examples and Monte Carlo workflow |
 | [R/SI.R](R/SI.R), [R/IV.R](R/IV.R) | Data generators, estimators, and their required helpers |
 | [scripts/run_si_cumulative.R](scripts/run_si_cumulative.R), [scripts/run_iv_table1.R](scripts/run_iv_table1.R) | Run and save one seed |
 | [scripts/merge_si_cumulative.R](scripts/merge_si_cumulative.R), [scripts/merge_iv_table1.R](scripts/merge_iv_table1.R) | Summarize saved seeds |
 | [Analytical_SE.md](Analytical_SE.md) | Separate technical note on analytical standard errors |
 
-Generated results, logs, R session files, and HTML output are excluded by
-`.gitignore`.
+Generated results, logs, R session files, and other HTML outputs are excluded
+by `.gitignore`. The root `Pipeline.html` is included as a rendered example.
 
 ## Analytical standard errors
 
